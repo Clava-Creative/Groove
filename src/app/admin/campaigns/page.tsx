@@ -54,7 +54,7 @@ export default async function AdminCampaignsPage() {
                     <p className="text-xs text-gray-400 mt-2">{(campaign.clients as unknown as { name: string } | null)?.name}</p>
                   </div>
                   {campaign.comment && (
-                    <p className="text-xs text-gray-400 italic max-w-xs ml-4">"{campaign.comment}"</p>
+                    <p className="text-xs text-gray-400 italic max-w-xs ml-4">&quot;{campaign.comment}&quot;</p>
                   )}
                 </div>
               </CardContent>

@@ -70,7 +70,7 @@ export default async function AdminPostsPage() {
                   </div>
                   {post.comment && (
                     <div className="max-w-xs">
-                      <p className="text-xs text-gray-400 italic">"{post.comment}"</p>
+                      <p className="text-xs text-gray-400 italic">&quot;{post.comment}&quot;</p>
                     </div>
                   )}
                 </div>

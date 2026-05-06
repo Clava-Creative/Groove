@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -18,7 +19,7 @@ interface ClientRecord {
   name: string
 }
 
-export default function NewPostPage() {
+function NewPostPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const preselectedClient = searchParams.get('client')
@@ -202,4 +203,8 @@ export default function NewPostPage() {
       </form>
     </div>
   )
+}
+
+export default function NewPostPageWrapper() {
+  return <Suspense><NewPostPage /></Suspense>
 }

@@ -233,7 +233,7 @@ export default function ApprovalCard({ item, type }: Props) {
             {item.status === 'rejected' && item.comment && (
               <div className="bg-red-50 rounded-lg p-3 mt-3">
                 <p className="text-xs font-medium text-red-600 mb-1">Seu feedback</p>
-                <p className="text-sm text-red-700">"{item.comment}"</p>
+                <p className="text-sm text-red-700">&quot;{item.comment}&quot;</p>
               </div>
             )}
 

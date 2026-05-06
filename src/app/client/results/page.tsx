@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { BarChart3, TrendingUp, Users, MousePointerClick, ShoppingCart } from 'lucide-react'
 
 export default async function ClientResultsPage() {
