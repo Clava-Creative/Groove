@@ -14,7 +14,7 @@ export default async function ClientsPage() {
     .order('name')
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
@@ -42,7 +42,7 @@ export default async function ClientsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {clients?.map((client) => (
             <Link key={client.id} href={`/admin/clients/${client.id}`}>
               <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer">

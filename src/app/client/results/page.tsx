@@ -17,7 +17,7 @@ export default async function ClientResultsPage() {
     .order('created_at', { ascending: false })
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-1">
           <BarChart3 className="w-5 h-5 text-violet-600" />
@@ -39,7 +39,7 @@ export default async function ClientResultsPage() {
               <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
                 {result.period}
               </h2>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card className="border-0 shadow-sm">
                   <CardContent className="pt-5 pb-5">
                     <div className="flex items-center gap-2 mb-2">

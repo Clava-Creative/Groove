@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -11,6 +12,8 @@ import {
   Lightbulb,
   BarChart3,
   LogOut,
+  Menu,
+  X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -29,6 +32,7 @@ export default function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const [open, setOpen] = useState(false)
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -36,11 +40,11 @@ export default function AdminSidebar() {
     router.refresh()
   }
 
-  return (
-    <aside className="w-60 shrink-0 border-r border-gray-100 bg-white flex flex-col h-screen sticky top-0">
+  const NavContent = () => (
+    <>
       <div className="px-6 py-5 border-b border-gray-100">
-        <Link href="/admin">
-          <h1 className="text-xl font-bold text-gray-900 tracking-tight">groove</h1>
+        <Link href="/admin" onClick={() => setOpen(false)}>
+          <h1 className="text-xl font-bold text-gray-900 tracking-tight">GROOVE</h1>
           <p className="text-xs text-violet-600 font-medium mt-0.5">Admin · Clava</p>
         </Link>
       </div>
@@ -54,8 +58,9 @@ export default function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setOpen(false)}
               className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                 active
                   ? 'bg-violet-50 text-violet-700'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -80,6 +85,47 @@ export default function AdminSidebar() {
           Sair
         </Button>
       </div>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      {/* Mobile top bar */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-100 flex items-center justify-between px-4 h-14">
+        <Link href="/admin">
+          <span className="text-lg font-bold text-gray-900 tracking-tight">GROOVE</span>
+        </Link>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <button
+            onClick={() => setOpen(!open)}
+            className="p-2 rounded-lg text-gray-500 hover:bg-gray-50"
+          >
+            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile drawer overlay */}
+      {open && (
+        <div
+          className="lg:hidden fixed inset-0 z-30 bg-black/20"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      {/* Mobile drawer */}
+      <aside className={cn(
+        'lg:hidden fixed top-14 left-0 bottom-0 z-40 w-64 bg-white border-r border-gray-100 flex flex-col transition-transform duration-200',
+        open ? 'translate-x-0' : '-translate-x-full'
+      )}>
+        <NavContent />
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex w-60 shrink-0 border-r border-gray-100 bg-white flex-col h-screen sticky top-0">
+        <NavContent />
+      </aside>
+    </>
   )
 }

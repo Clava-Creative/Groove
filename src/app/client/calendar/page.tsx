@@ -29,7 +29,7 @@ export default async function ClientCalendarPage() {
   const pendingCount = posts?.filter((p) => p.status === 'pending').length ?? 0
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-1">
           <CalendarDays className="w-5 h-5 text-violet-600" />

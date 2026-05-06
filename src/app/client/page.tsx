@@ -18,7 +18,7 @@ export default async function ClientDashboard() {
     .eq('auth_id', user.id)
     .single()
 
-  if (!profile?.client_id) return <div className="p-8 text-gray-500">Conta não configurada.</div>
+  if (!profile?.client_id) return <div className="p-4 md:p-8 text-gray-500">Conta não configurada.</div>
 
   const clientId = profile.client_id
 
@@ -41,7 +41,7 @@ export default async function ClientDashboard() {
   const clientName = (profile.clients as unknown as { name: string } | null)?.name
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="mb-8">
         <p className="text-sm text-gray-400 mb-1">Bem-vindo,</p>
         <h1 className="text-2xl font-bold text-gray-900">{clientName ?? profile.name}</h1>
@@ -72,7 +72,7 @@ export default async function ClientDashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {latestResult && (
           <>
             <Card className="border-0 shadow-sm">

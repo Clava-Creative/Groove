@@ -64,7 +64,7 @@ export default function NewInsightPage() {
   }
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-4 md:p-8 max-w-2xl">
       <div className="mb-6">
         <Link href="/admin/insights" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 mb-4">
           <ArrowLeft className="w-4 h-4" /> Voltar

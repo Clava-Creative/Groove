@@ -15,7 +15,7 @@ export default async function AdminPostsPage() {
     .order('scheduled_date', { ascending: false })
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Posts</h1>

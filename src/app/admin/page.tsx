@@ -27,14 +27,14 @@ export default async function AdminDashboard() {
   const totalPending = (pendingPosts?.length ?? 0) + (pendingCampaigns?.length ?? 0) + (pendingInsights?.length ?? 0)
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-sm text-gray-500 mt-1">Visão geral das aprovações pendentes</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Card className="border-0 shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -93,7 +93,7 @@ export default async function AdminDashboard() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending Posts */}
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-3">

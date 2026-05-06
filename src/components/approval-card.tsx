@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import StatusBadge from '@/components/status-badge'
-import { Check, X, ImageIcon, ChevronDown, ChevronUp } from 'lucide-react'
+import { Check, X, ImageIcon, ChevronDown, ChevronUp, ZoomIn } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -21,6 +21,7 @@ interface Item {
   reviewed_at: string | null
   caption?: string | null
   media_url?: string | null
+  media_type?: string | null
   scheduled_date?: string
   body?: string
   specialist_name?: string | null
@@ -42,6 +43,20 @@ export default function ApprovalCard({ item, type }: Props) {
   const [rejecting, setRejecting] = useState(false)
   const [comment, setComment] = useState('')
   const [loading, setLoading] = useState(false)
+  const [lightbox, setLightbox] = useState(false)
+
+  const closeLightbox = useCallback(() => setLightbox(false), [])
+
+  useEffect(() => {
+    if (!lightbox) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeLightbox() }
+    document.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+    }
+  }, [lightbox, closeLightbox])
 
   async function getAdminUsers(): Promise<string[]> {
     const { data } = await supabase.from('users').select('id').eq('role', 'admin')
@@ -160,7 +175,36 @@ export default function ApprovalCard({ item, type }: Props) {
             {type === 'post' && (
               <div className="space-y-3">
                 {item.media_url && (
-                  <img src={item.media_url} alt={item.title} className="w-full max-h-80 rounded-xl object-cover" />
+                  item.media_type === 'video' ? (
+                    <div
+                      className="relative group cursor-zoom-in rounded-xl overflow-hidden"
+                      onClick={() => setLightbox(true)}
+                    >
+                      <video
+                        src={item.media_url}
+                        className="w-full max-h-80 rounded-xl object-cover pointer-events-none"
+                        muted
+                        playsInline
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ZoomIn className="w-8 h-8 text-white drop-shadow" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className="relative group cursor-zoom-in rounded-xl overflow-hidden"
+                      onClick={() => setLightbox(true)}
+                    >
+                      <img
+                        src={item.media_url}
+                        alt={item.title}
+                        className="w-full max-h-80 rounded-xl object-cover"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
+                        <ZoomIn className="w-8 h-8 text-white drop-shadow" />
+                      </div>
+                    </div>
+                  )
                 )}
                 {item.caption && (
                   <div className="bg-gray-50 rounded-lg p-3">
@@ -235,6 +279,37 @@ export default function ApprovalCard({ item, type }: Props) {
           </div>
         )}
       </CardContent>
+
+      {/* Lightbox */}
+      {lightbox && item.media_url && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+          onClick={closeLightbox}
+        >
+          <button
+            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+            onClick={closeLightbox}
+          >
+            <X className="w-5 h-5" />
+          </button>
+          {item.media_type === 'video' ? (
+            <video
+              src={item.media_url}
+              controls
+              autoPlay
+              className="max-w-[90vw] max-h-[90vh] rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <img
+              src={item.media_url}
+              alt={item.title}
+              className="max-w-[90vw] max-h-[90vh] rounded-lg object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
+        </div>
+      )}
     </Card>
   )
 }

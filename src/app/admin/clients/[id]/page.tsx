@@ -21,7 +21,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
   if (!client) notFound()
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="mb-6">
         <Link href="/admin/clients" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 mb-4">
           <ArrowLeft className="w-4 h-4" /> Clientes

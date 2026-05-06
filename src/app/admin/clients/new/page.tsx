@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,7 +12,6 @@ import { toast } from 'sonner'
 
 export default function NewClientPage() {
   const router = useRouter()
-  const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     name: '',
@@ -33,21 +31,13 @@ export default function NewClientPage() {
     setLoading(true)
 
     try {
-      // Create client record
-      const { data: newClient, error: clientError } = await supabase
-        .from('clients')
-        .insert({ name: form.name, email: form.email, primary_color: form.primary_color })
-        .select()
-        .single()
-
-      if (clientError || !newClient) throw new Error(clientError?.message ?? 'Erro ao criar cliente')
-
-      // Create auth user for the client via API route
       const res = await fetch('/api/admin/invite-client', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          clientId: newClient.id,
+          clientName: form.name,
+          clientEmail: form.email,
+          clientColor: form.primary_color,
           email: form.userEmail,
           name: form.userName,
           password: form.userPassword,
@@ -56,7 +46,7 @@ export default function NewClientPage() {
 
       if (!res.ok) {
         const err = await res.json()
-        throw new Error(err.error ?? 'Erro ao criar usuário')
+        throw new Error(err.error ?? 'Erro ao criar cliente')
       }
 
       toast.success('Cliente criado com sucesso!')
@@ -70,7 +60,7 @@ export default function NewClientPage() {
   }
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-4 md:p-8 max-w-2xl">
       <div className="mb-6">
         <Link href="/admin/clients" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 mb-4">
           <ArrowLeft className="w-4 h-4" /> Voltar

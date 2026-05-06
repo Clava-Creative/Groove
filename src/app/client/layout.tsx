@@ -19,7 +19,7 @@ export default async function ClientLayout({ children }: { children: React.React
   return (
     <div className="flex min-h-screen bg-gray-50">
       <ClientSidebar clientName={clientName} />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pt-14 lg:pt-0">
         {children}
       </main>
     </div>
