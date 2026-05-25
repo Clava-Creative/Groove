@@ -14,12 +14,15 @@ import {
   LogOut,
   Menu,
   X,
+  Building2,
+  UserCog,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import NotificationBell from '@/components/notification-bell'
+import type { Role } from '@/types/database'
 
-const navItems = [
+const baseNavItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/clients', label: 'Clientes', icon: Users },
   { href: '/admin/posts', label: 'Posts', icon: ImageIcon },
@@ -28,11 +31,26 @@ const navItems = [
   { href: '/admin/results', label: 'Resultados', icon: BarChart3 },
 ]
 
-export default function AdminSidebar() {
+const adminOnlyItems = [
+  { href: '/admin/agencies', label: 'Agências', icon: Building2 },
+  { href: '/admin/team', label: 'Equipe Clava', icon: UserCog },
+]
+
+interface Props {
+  role: Role
+}
+
+export default function AdminSidebar({ role }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
   const [open, setOpen] = useState(false)
+
+  const navItems = role === 'admin'
+    ? [...baseNavItems, ...adminOnlyItems]
+    : baseNavItems
+
+  const subtitle = role === 'admin' ? 'Admin · Clava' : 'Operador'
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -45,7 +63,7 @@ export default function AdminSidebar() {
       <div className="px-6 py-5 border-b border-gray-100">
         <Link href="/admin" onClick={() => setOpen(false)}>
           <h1 className="text-xl font-bold text-gray-900 tracking-tight">GROOVE</h1>
-          <p className="text-xs text-violet-600 font-medium mt-0.5">Admin · Clava</p>
+          <p className="text-xs text-violet-600 font-medium mt-0.5">{subtitle}</p>
         </Link>
       </div>
 

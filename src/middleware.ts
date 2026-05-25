@@ -40,13 +40,13 @@ export async function middleware(request: NextRequest) {
       .eq('auth_id', user.id)
       .single()
 
-    if (profile?.role === 'admin') {
+    if (profile?.role === 'admin' || profile?.role === 'operator') {
       return NextResponse.redirect(new URL('/admin', request.url))
     }
     return NextResponse.redirect(new URL('/client', request.url))
   }
 
-  // Role-based access control
+  // Role-based access control: only admin and operator can access /admin
   if (user && pathname.startsWith('/admin')) {
     const { data: profile } = await supabase
       .from('users')
@@ -54,11 +54,12 @@ export async function middleware(request: NextRequest) {
       .eq('auth_id', user.id)
       .single()
 
-    if (profile?.role !== 'admin') {
+    if (profile?.role !== 'admin' && profile?.role !== 'operator') {
       return NextResponse.redirect(new URL('/client', request.url))
     }
   }
 
+  // Redirect admin/operator away from /client
   if (user && pathname.startsWith('/client')) {
     const { data: profile } = await supabase
       .from('users')
@@ -66,7 +67,7 @@ export async function middleware(request: NextRequest) {
       .eq('auth_id', user.id)
       .single()
 
-    if (profile?.role === 'admin') {
+    if (profile?.role === 'admin' || profile?.role === 'operator') {
       return NextResponse.redirect(new URL('/admin', request.url))
     }
   }

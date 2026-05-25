@@ -1,4 +1,12 @@
-export type Role = 'admin' | 'client'
+export type Role = 'admin' | 'operator' | 'client'
+
+export interface Agency {
+  id: string
+  name: string
+  logo_url: string | null
+  email: string | null
+  created_at: string
+}
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected'
 
 export interface PostItem {
@@ -25,6 +33,24 @@ export type RefType = 'post' | 'campaign' | 'insight'
 export type Database = {
   public: {
     Tables: {
+      agencies: {
+        Row: Agency
+        Insert: {
+          id?: string
+          name: string
+          logo_url?: string | null
+          email?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          logo_url?: string | null
+          email?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           id: string
@@ -32,6 +58,7 @@ export type Database = {
           logo_url: string | null
           primary_color: string | null
           email: string | null
+          agency_id: string | null
           created_at: string
         }
         Insert: {
@@ -40,6 +67,7 @@ export type Database = {
           logo_url?: string | null
           primary_color?: string | null
           email?: string | null
+          agency_id?: string | null
           created_at?: string
         }
         Update: {
@@ -48,6 +76,7 @@ export type Database = {
           logo_url?: string | null
           primary_color?: string | null
           email?: string | null
+          agency_id?: string | null
           created_at?: string
         }
         Relationships: []
@@ -57,6 +86,7 @@ export type Database = {
           id: string
           auth_id: string
           client_id: string | null
+          agency_id: string | null
           role: Role
           name: string
           email: string
@@ -66,6 +96,7 @@ export type Database = {
           id?: string
           auth_id: string
           client_id?: string | null
+          agency_id?: string | null
           role: Role
           name: string
           email: string
@@ -75,6 +106,7 @@ export type Database = {
           id?: string
           auth_id?: string
           client_id?: string | null
+          agency_id?: string | null
           role?: Role
           name?: string
           email?: string
@@ -308,6 +340,7 @@ export type Database = {
       approval_status: ApprovalStatus
       role: Role
     }
+
     CompositeTypes: { [_ in never]: never }
   }
 }

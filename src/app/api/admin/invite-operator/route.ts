@@ -9,45 +9,22 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient()
 
-  // Verify caller is admin or operator
+  // Only Clava admins can invite operators
   const { data: profile } = await admin
     .from('users')
-    .select('role, agency_id')
+    .select('role')
     .eq('auth_id', user.id)
     .single()
 
-  if (!profile || !['admin', 'operator'].includes(profile.role)) {
+  if (profile?.role !== 'admin') {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
   }
 
   const body = await request.json()
-  const { clientName, clientEmail, clientColor, email, name, password, agencyId } = body
+  const { agencyId, name, email, password } = body
 
-  if (!clientName || !email || !name || !password) {
+  if (!agencyId || !name || !email || !password) {
     return NextResponse.json({ error: 'Campos obrigatórios faltando' }, { status: 400 })
-  }
-
-  // Determine agency_id:
-  // - admin can pass agencyId explicitly (or null for Clava's own clients)
-  // - operator always uses their own agency_id
-  const resolvedAgencyId: string | null = profile.role === 'operator'
-    ? profile.agency_id
-    : (agencyId ?? null)
-
-  // Create client record
-  const { data: newClient, error: clientError } = await admin
-    .from('clients')
-    .insert({
-      name: clientName,
-      email: clientEmail ?? null,
-      primary_color: clientColor ?? '#7c3aed',
-      agency_id: resolvedAgencyId,
-    })
-    .select()
-    .single()
-
-  if (clientError || !newClient) {
-    return NextResponse.json({ error: clientError?.message ?? 'Erro ao criar cliente' }, { status: 500 })
   }
 
   // Create auth user
@@ -58,24 +35,22 @@ export async function POST(request: Request) {
   })
 
   if (authError || !newUser.user) {
-    await admin.from('clients').delete().eq('id', newClient.id)
     return NextResponse.json({ error: authError?.message ?? 'Erro ao criar usuário' }, { status: 500 })
   }
 
-  // Create user profile
+  // Create user profile as operator
   const { error: profileError } = await admin.from('users').insert({
     auth_id: newUser.user.id,
-    client_id: newClient.id,
-    role: 'client',
+    role: 'operator',
+    agency_id: agencyId,
     name,
     email,
   })
 
   if (profileError) {
     await admin.auth.admin.deleteUser(newUser.user.id)
-    await admin.from('clients').delete().eq('id', newClient.id)
     return NextResponse.json({ error: profileError.message }, { status: 500 })
   }
 
-  return NextResponse.json({ success: true, clientId: newClient.id })
+  return NextResponse.json({ success: true })
 }
