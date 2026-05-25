@@ -1,5 +1,19 @@
 export type Role = 'admin' | 'client'
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected'
+
+export interface PostItem {
+  id: string
+  post_id: string
+  title: string | null
+  group_name: string | null
+  media_url: string
+  media_type: 'image' | 'video' | null
+  order_index: number
+  status: ApprovalStatus
+  comment: string | null
+  reviewed_at: string | null
+  created_at: string
+}
 export type NotificationType =
   | 'post_pending'
   | 'campaign_pending'
@@ -77,6 +91,7 @@ export type Database = {
           media_url: string | null
           media_type: 'image' | 'video' | null
           scheduled_date: string
+          is_package: boolean
           status: ApprovalStatus
           comment: string | null
           reviewed_at: string | null
@@ -90,6 +105,7 @@ export type Database = {
           media_url?: string | null
           media_type?: 'image' | 'video' | null
           scheduled_date: string
+          is_package?: boolean
           status?: ApprovalStatus
           comment?: string | null
           reviewed_at?: string | null
@@ -103,6 +119,37 @@ export type Database = {
           media_url?: string | null
           media_type?: 'image' | 'video' | null
           scheduled_date?: string
+          is_package?: boolean
+          status?: ApprovalStatus
+          comment?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      post_items: {
+        Row: PostItem
+        Insert: {
+          id?: string
+          post_id: string
+          title?: string | null
+          group_name?: string | null
+          media_url: string
+          media_type?: 'image' | 'video' | null
+          order_index?: number
+          status?: ApprovalStatus
+          comment?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          title?: string | null
+          group_name?: string | null
+          media_url?: string
+          media_type?: 'image' | 'video' | null
+          order_index?: number
           status?: ApprovalStatus
           comment?: string | null
           reviewed_at?: string | null

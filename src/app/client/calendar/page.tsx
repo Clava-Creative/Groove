@@ -3,6 +3,7 @@ import ApprovalCard from '@/components/approval-card'
 import { CalendarDays } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import type { PostItem } from '@/types/database'
 
 export default async function ClientCalendarPage() {
   const supabase = await createClient()
@@ -14,7 +15,7 @@ export default async function ClientCalendarPage() {
 
   const { data: posts } = await supabase
     .from('posts')
-    .select('*')
+    .select('*, post_items(*)')
     .eq('client_id', profile.client_id)
     .order('scheduled_date', { ascending: true })
 
@@ -54,7 +55,12 @@ export default async function ClientCalendarPage() {
               </h2>
               <div className="grid grid-cols-1 gap-3">
                 {monthPosts?.map((post) => (
-                  <ApprovalCard key={post.id} item={post} type="post" />
+                  <ApprovalCard
+                    key={post.id}
+                    item={post}
+                    type="post"
+                    postItems={(post as unknown as { post_items: PostItem[] }).post_items ?? []}
+                  />
                 ))}
               </div>
             </div>
