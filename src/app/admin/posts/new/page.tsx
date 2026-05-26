@@ -259,7 +259,7 @@ function NewPostPage() {
               <Textarea id="caption" value={form.caption} onChange={(e) => set('caption', e.target.value)} placeholder="Texto da publicação ou observações para o cliente..." rows={3} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="date">Data de publicação *</Label>
+              <Label htmlFor="date">Data prevista de publicação *</Label>
               <Input id="date" type="date" value={form.scheduled_date} onChange={(e) => set('scheduled_date', e.target.value)} required />
             </div>
           </CardContent>
