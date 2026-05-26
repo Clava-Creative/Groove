@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Clock, CheckCircle, XCircle, ArrowRight } from 'lucide-react'
+import { Clock, CheckCircle, XCircle, ArrowRight, Layers } from 'lucide-react'
 import Link from 'next/link'
 import StatusBadge from '@/components/status-badge'
 import { format } from 'date-fns'
@@ -62,12 +62,11 @@ export default async function ClientDashboard() {
             </div>
           </div>
           <div className="flex gap-2">
-            {(pendingPosts?.length ?? 0) > 0 && (
-              <Link href="/client/calendar"><Button size="sm" variant="outline" className="text-amber-700 border-amber-200">Calendário</Button></Link>
-            )}
-            {(pendingCampaigns?.length ?? 0) > 0 && (
-              <Link href="/client/campaigns"><Button size="sm" variant="outline" className="text-amber-700 border-amber-200">Campanhas</Button></Link>
-            )}
+            <Link href="/client/swipe">
+              <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white gap-1.5">
+                <Layers className="w-3.5 h-3.5" /> Revisar
+              </Button>
+            </Link>
           </div>
         </div>
       )}
