@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Clock, CheckCircle, XCircle, ArrowRight, Layers } from 'lucide-react'
+import { Clock, CheckCircle, XCircle, ArrowRight, Layers, Megaphone } from 'lucide-react'
 import Link from 'next/link'
 import StatusBadge from '@/components/status-badge'
 import { format } from 'date-fns'
@@ -133,6 +133,20 @@ export default async function ClientDashboard() {
                     {insight.specialist_name && <p className="text-xs text-gray-400">Por {insight.specialist_name}</p>}
                   </div>
                   <StatusBadge status={insight.status} />
+                </Link>
+              ))}
+              {pendingCampaigns?.map((campaign) => (
+                <Link key={campaign.id} href="/client/campaigns" className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded bg-violet-50 flex items-center justify-center shrink-0">
+                      <Megaphone className="w-4 h-4 text-violet-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{campaign.title}</p>
+                      {campaign.objective && <p className="text-xs text-gray-400 truncate max-w-[180px]">{campaign.objective}</p>}
+                    </div>
+                  </div>
+                  <StatusBadge status={campaign.status} />
                 </Link>
               ))}
             </div>

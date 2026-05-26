@@ -16,6 +16,7 @@ import {
   X,
   Building2,
   UserCog,
+  CalendarDays,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -26,6 +27,7 @@ const baseNavItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/clients', label: 'Clientes', icon: Users },
   { href: '/admin/posts', label: 'Posts', icon: ImageIcon },
+  { href: '/admin/calendar', label: 'Calendário', icon: CalendarDays },
   { href: '/admin/campaigns', label: 'Campanhas', icon: Megaphone },
   { href: '/admin/insights', label: 'Insights', icon: Lightbulb },
   { href: '/admin/results', label: 'Resultados', icon: BarChart3 },

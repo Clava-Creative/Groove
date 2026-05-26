@@ -43,7 +43,8 @@ export default async function AdminPostsPage() {
       ) : (
         <div className="grid grid-cols-1 gap-3">
           {posts?.map((post) => (
-            <Card key={post.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
+            <Link key={post.id} href={`/admin/posts/${post.id}`}>
+            <Card className="border-0 shadow-sm hover:shadow-md hover:border-violet-100 border transition-all cursor-pointer">
               <CardContent className="py-4">
                 <div className="flex items-center gap-4">
                   {post.media_url ? (
@@ -82,6 +83,7 @@ export default async function AdminPostsPage() {
                 </div>
               </CardContent>
             </Card>
+            </Link>
           ))}
         </div>
       )}
