@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
-import { Check, X, ImageIcon, PlayCircle, Megaphone, Lightbulb, ChevronLeft } from 'lucide-react'
+import { Check, X, ImageIcon, PlayCircle, Megaphone, Lightbulb, ChevronLeft, Package, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,6 +13,8 @@ export interface SwipeItem {
   id: string
   type: 'post' | 'campaign' | 'insight'
   title: string
+  is_package?: boolean
+  file_count?: number
   caption?: string | null
   media_url?: string | null
   media_type?: string | null
@@ -232,6 +234,49 @@ function SwipeCard({
   )
 }
 
+// ─── Package card (not swipeable — opens in calendar) ────────────────────────
+function PackageSwipeCard({ item, onSkip }: { item: SwipeItem; onSkip: () => void }) {
+  const router = useRouter()
+  return (
+    <div className="absolute inset-0 flex flex-col bg-white rounded-3xl shadow-xl overflow-hidden">
+      {/* Header */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <div className="w-20 h-20 rounded-2xl bg-violet-50 flex items-center justify-center">
+          <Package className="w-10 h-10 text-violet-400" />
+        </div>
+        <div>
+          <p className="text-xs font-semibold text-violet-500 uppercase tracking-wider mb-1">Pacote</p>
+          <p className="text-xl font-bold text-gray-900">{item.title}</p>
+          {item.file_count != null && (
+            <p className="text-sm text-gray-400 mt-1">{item.file_count} arquivo{item.file_count !== 1 ? 's' : ''} para revisar</p>
+          )}
+          {item.scheduled_date && (
+            <p className="text-xs text-gray-400 mt-2">
+              {new Date(item.scheduled_date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}
+            </p>
+          )}
+        </div>
+        <p className="text-sm text-gray-400 max-w-xs">
+          Pacotes têm múltiplos arquivos. Revise cada um pelo calendário.
+        </p>
+      </div>
+
+      {/* Actions */}
+      <div className="p-5 space-y-2 border-t border-gray-100">
+        <Button
+          className="w-full bg-violet-600 hover:bg-violet-700 gap-2"
+          onClick={() => router.push('/client/calendar')}
+        >
+          Abrir no calendário <ArrowRight className="w-4 h-4" />
+        </Button>
+        <Button variant="ghost" className="w-full text-gray-400" onClick={onSkip}>
+          Pular por agora
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 export default function SwipeReviewStack({ items: initialItems, clientId }: { items: SwipeItem[]; clientId: string }) {
   const supabase = createClient()
   const router = useRouter()
@@ -240,6 +285,11 @@ export default function SwipeReviewStack({ items: initialItems, clientId }: { it
   const total = initialItems.length
 
   const current = items[0]
+
+  function handleSkipPackage() {
+    // Move package to end of queue so user can review others first
+    setItems((prev) => [...prev.slice(1), prev[0]])
+  }
 
   async function handleApprove() {
     if (!current) return
@@ -353,16 +403,30 @@ export default function SwipeReviewStack({ items: initialItems, clientId }: { it
 
       {/* Card stack */}
       <div className="flex-1 relative mx-4 my-3" style={{ touchAction: 'none' }}>
-        {items.slice(0, 3).map((item, i) => (
+        {/* Background cards (stack effect) */}
+        {items.slice(1, 3).map((item, i) => (
           <SwipeCard
             key={item.id}
             item={item}
-            index={i}
-            isTop={i === 0}
+            index={i + 1}
+            isTop={false}
             onApprove={handleApprove}
             onReject={handleReject}
           />
         ))}
+        {/* Top card — package or regular */}
+        {current.is_package ? (
+          <PackageSwipeCard item={current} onSkip={handleSkipPackage} />
+        ) : (
+          <SwipeCard
+            key={current.id}
+            item={current}
+            index={0}
+            isTop={true}
+            onApprove={handleApprove}
+            onReject={handleReject}
+          />
+        )}
       </div>
 
       {/* Action buttons */}

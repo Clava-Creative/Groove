@@ -21,15 +21,24 @@ export default async function SwipePage() {
 
   const cid = profile.client_id
 
-  // Fetch all pending items
-  const [{ data: posts }, { data: campaigns }, { data: insights }] = await Promise.all([
+  // Fetch all pending items (single posts, packages, campaigns, insights)
+  const [{ data: posts }, { data: packages }, { data: campaigns }, { data: insights }] = await Promise.all([
     supabase.from('posts').select('id, title, caption, media_url, media_type, scheduled_date').eq('client_id', cid).eq('status', 'pending').eq('is_package', false),
+    supabase.from('posts').select('id, title, scheduled_date, post_items(count)').eq('client_id', cid).eq('status', 'pending').eq('is_package', true),
     supabase.from('campaigns').select('id, title, description, objective').eq('client_id', cid).eq('status', 'pending'),
     supabase.from('insights').select('id, title, body, specialist_name').eq('client_id', cid).eq('status', 'pending'),
   ])
 
   const items: SwipeItem[] = [
-    ...(posts ?? []).map((p) => ({ ...p, type: 'post' as const })),
+    ...(posts ?? []).map((p) => ({ ...p, type: 'post' as const, is_package: false })),
+    ...(packages ?? []).map((p) => ({
+      id: p.id,
+      title: p.title,
+      scheduled_date: p.scheduled_date,
+      type: 'post' as const,
+      is_package: true,
+      file_count: (p as unknown as { post_items: { count: number }[] }).post_items?.[0]?.count ?? 0,
+    })),
     ...(campaigns ?? []).map((c) => ({ ...c, type: 'campaign' as const })),
     ...(insights ?? []).map((i) => ({ ...i, type: 'insight' as const })),
   ]
