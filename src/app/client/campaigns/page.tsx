@@ -38,7 +38,7 @@ export default async function ClientCampaignsPage() {
       ) : (
         <div className="space-y-3">
           {campaigns?.map((campaign) => (
-            <ApprovalCard key={campaign.id} item={campaign} type="campaign" />
+            <ApprovalCard key={campaign.id} item={campaign} type="campaign" clientId={profile.client_id} />
           ))}
         </div>
       )}

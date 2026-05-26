@@ -53,7 +53,7 @@ export default async function SwipePage() {
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
-      <SwipeReviewStack items={items} />
+      <SwipeReviewStack items={items} clientId={cid} />
     </div>
   )
 }

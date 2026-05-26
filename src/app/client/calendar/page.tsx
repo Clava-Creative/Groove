@@ -60,6 +60,7 @@ export default async function ClientCalendarPage() {
                     item={post}
                     type="post"
                     postItems={(post as unknown as { post_items: PostItem[] }).post_items ?? []}
+                    clientId={profile.client_id}
                   />
                 ))}
               </div>

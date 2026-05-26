@@ -38,7 +38,7 @@ export default async function ClientInsightsPage() {
       ) : (
         <div className="space-y-3">
           {insights?.map((insight) => (
-            <ApprovalCard key={insight.id} item={insight} type="insight" />
+            <ApprovalCard key={insight.id} item={insight} type="insight" clientId={profile.client_id} />
           ))}
         </div>
       )}

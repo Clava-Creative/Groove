@@ -34,13 +34,28 @@ interface Props {
   item: Item
   type: 'post' | 'campaign' | 'insight'
   postItems?: PostItem[]
+  clientId: string
 }
 
 const TABLE_MAP = { post: 'posts', campaign: 'campaigns', insight: 'insights' } as const
 
+// Returns the user IDs to notify when a client reviews content.
+// Operator's client → notify operators of that agency.
+// Clava's client (agency_id null) → notify admins.
+async function getStaffToNotify(supabase: ReturnType<typeof createClient>, clientId: string): Promise<string[]> {
+  const { data: client } = await supabase.from('clients').select('agency_id').eq('id', clientId).single()
+  if (client?.agency_id) {
+    const { data } = await supabase.from('users').select('id').eq('role', 'operator').eq('agency_id', client.agency_id)
+    return (data ?? []).map((u) => u.id)
+  } else {
+    const { data } = await supabase.from('users').select('id').eq('role', 'admin')
+    return (data ?? []).map((u) => u.id)
+  }
+}
+
 // ─── Package Card ────────────────────────────────────────────────────────────
 
-function PackageCard({ item, postItems: initialItems }: { item: Item; postItems: PostItem[] }) {
+function PackageCard({ item, postItems: initialItems, clientId }: { item: Item; postItems: PostItem[]; clientId: string }) {
   const router = useRouter()
   const supabase = createClient()
   const [expanded, setExpanded] = useState(item.status === 'pending')
@@ -96,12 +111,12 @@ function PackageCard({ item, postItems: initialItems }: { item: Item; postItems:
         reviewed_at: new Date().toISOString(),
       }).eq('id', item.id)
 
-      // Notify admins
-      const { data: admins } = await supabase.from('users').select('id').eq('role', 'admin')
-      if (admins && admins.length > 0) {
+      // Notify operator (if agency client) or admin (if Clava client)
+      const staffIds = await getStaffToNotify(supabase, clientId)
+      if (staffIds.length > 0) {
         await supabase.from('notifications').insert(
-          admins.map((a) => ({
-            user_id: a.id,
+          staffIds.map((uid) => ({
+            user_id: uid,
             type: (anyRejected ? 'rejected' : 'approved') as 'approved' | 'rejected',
             message: `Pacote "${item.title}" ${anyRejected ? 'tem itens rejeitados' : 'foi totalmente aprovado'}`,
             ref_id: item.id,
@@ -344,7 +359,7 @@ function PackageCard({ item, postItems: initialItems }: { item: Item; postItems:
 
 // ─── Single Item Card ────────────────────────────────────────────────────────
 
-export default function ApprovalCard({ item, type, postItems = [] }: Props) {
+export default function ApprovalCard({ item, type, postItems = [], clientId }: Props) {
   const router = useRouter()
   const supabase = createClient()
   const [expanded, setExpanded] = useState(item.status === 'pending')
@@ -355,7 +370,7 @@ export default function ApprovalCard({ item, type, postItems = [] }: Props) {
 
   // Render package card
   if (type === 'post' && item.is_package) {
-    return <PackageCard item={item} postItems={postItems} />
+    return <PackageCard item={item} postItems={postItems} clientId={clientId} />
   }
 
   const closeLightbox = useCallback(() => setLightbox(false), [])
@@ -368,11 +383,6 @@ export default function ApprovalCard({ item, type, postItems = [] }: Props) {
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = '' }
   }, [lightbox, closeLightbox])
 
-  async function getAdminUsers(): Promise<string[]> {
-    const { data } = await supabase.from('users').select('id').eq('role', 'admin')
-    return (data ?? []).map((u) => u.id)
-  }
-
   async function handleApprove() {
     setLoading(true)
     const table = TABLE_MAP[type]
@@ -383,11 +393,11 @@ export default function ApprovalCard({ item, type, postItems = [] }: Props) {
 
     if (error) { toast.error('Erro ao aprovar'); setLoading(false); return }
 
-    const adminIds = await getAdminUsers()
-    if (adminIds.length > 0) {
+    const staffIds = await getStaffToNotify(supabase, clientId)
+    if (staffIds.length > 0) {
       await supabase.from('notifications').insert(
-        adminIds.map((adminId) => ({
-          user_id: adminId,
+        staffIds.map((uid) => ({
+          user_id: uid,
           type: 'approved' as const,
           message: `"${item.title}" foi aprovado pelo cliente`,
           ref_id: item.id,
@@ -412,11 +422,11 @@ export default function ApprovalCard({ item, type, postItems = [] }: Props) {
 
     if (error) { toast.error('Erro ao rejeitar'); setLoading(false); return }
 
-    const adminIds = await getAdminUsers()
-    if (adminIds.length > 0) {
+    const staffIds = await getStaffToNotify(supabase, clientId)
+    if (staffIds.length > 0) {
       await supabase.from('notifications').insert(
-        adminIds.map((adminId) => ({
-          user_id: adminId,
+        staffIds.map((uid) => ({
+          user_id: uid,
           type: 'rejected' as const,
           message: `"${item.title}" foi rejeitado. Motivo: ${comment.trim()}`,
           ref_id: item.id,
@@ -425,7 +435,7 @@ export default function ApprovalCard({ item, type, postItems = [] }: Props) {
       )
     }
 
-    toast.success('Feedback enviado para a Clava')
+    toast.success('Feedback enviado!')
     router.refresh()
     setRejecting(false)
     setLoading(false)

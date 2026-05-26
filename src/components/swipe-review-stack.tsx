@@ -26,6 +26,17 @@ export interface SwipeItem {
 const TABLE_MAP = { post: 'posts', campaign: 'campaigns', insight: 'insights' } as const
 const SWIPE_THRESHOLD = 100
 
+async function getStaffToNotify(supabase: ReturnType<typeof createClient>, clientId: string): Promise<string[]> {
+  const { data: client } = await supabase.from('clients').select('agency_id').eq('id', clientId).single()
+  if (client?.agency_id) {
+    const { data } = await supabase.from('users').select('id').eq('role', 'operator').eq('agency_id', client.agency_id)
+    return (data ?? []).map((u) => u.id)
+  } else {
+    const { data } = await supabase.from('users').select('id').eq('role', 'admin')
+    return (data ?? []).map((u) => u.id)
+  }
+}
+
 function SwipeCard({
   item,
   onApprove,
@@ -221,7 +232,7 @@ function SwipeCard({
   )
 }
 
-export default function SwipeReviewStack({ items: initialItems }: { items: SwipeItem[] }) {
+export default function SwipeReviewStack({ items: initialItems, clientId }: { items: SwipeItem[]; clientId: string }) {
   const supabase = createClient()
   const router = useRouter()
   const [items, setItems] = useState(initialItems)
@@ -235,12 +246,11 @@ export default function SwipeReviewStack({ items: initialItems }: { items: Swipe
     const table = TABLE_MAP[current.type]
     await supabase.from(table).update({ status: 'approved', reviewed_at: new Date().toISOString(), comment: null }).eq('id', current.id)
 
-    // Notify admins
-    const { data: admins } = await supabase.from('users').select('id').eq('role', 'admin')
-    if (admins && admins.length > 0) {
+    const staffIds = await getStaffToNotify(supabase, clientId)
+    if (staffIds.length > 0) {
       await supabase.from('notifications').insert(
-        admins.map((a) => ({
-          user_id: a.id,
+        staffIds.map((uid) => ({
+          user_id: uid,
           type: 'approved' as const,
           message: `"${current.title}" foi aprovado pelo cliente`,
           ref_id: current.id,
@@ -259,11 +269,11 @@ export default function SwipeReviewStack({ items: initialItems }: { items: Swipe
     const table = TABLE_MAP[current.type]
     await supabase.from(table).update({ status: 'rejected', reviewed_at: new Date().toISOString(), comment: comment.trim() }).eq('id', current.id)
 
-    const { data: admins } = await supabase.from('users').select('id').eq('role', 'admin')
-    if (admins && admins.length > 0) {
+    const staffIds = await getStaffToNotify(supabase, clientId)
+    if (staffIds.length > 0) {
       await supabase.from('notifications').insert(
-        admins.map((a) => ({
-          user_id: a.id,
+        staffIds.map((uid) => ({
+          user_id: uid,
           type: 'rejected' as const,
           message: `"${current.title}" foi rejeitado. Motivo: ${comment.trim()}`,
           ref_id: current.id,
