@@ -68,7 +68,13 @@ export default async function AdminPostsPage() {
                       {format(new Date(post.scheduled_date), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
                     </p>
                   </div>
-                  {post.comment && (
+                  {post.comment && post.status === 'rejected' && (
+                    <div className="max-w-xs bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                      <p className="text-xs font-semibold text-red-600 mb-0.5">Comentário do cliente</p>
+                      <p className="text-xs text-red-700 italic">&quot;{post.comment}&quot;</p>
+                    </div>
+                  )}
+                  {post.comment && post.status !== 'rejected' && (
                     <div className="max-w-xs">
                       <p className="text-xs text-gray-400 italic">&quot;{post.comment}&quot;</p>
                     </div>

@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   X,
+  Layers,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -20,6 +21,7 @@ import NotificationBell from '@/components/notification-bell'
 
 const navItems = [
   { href: '/client', label: 'Início', icon: LayoutDashboard, exact: true },
+  { href: '/client/swipe', label: 'Revisar', icon: Layers },
   { href: '/client/calendar', label: 'Calendário', icon: CalendarDays },
   { href: '/client/campaigns', label: 'Campanhas', icon: Megaphone },
   { href: '/client/insights', label: 'Insights', icon: Lightbulb },
