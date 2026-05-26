@@ -244,19 +244,31 @@ export default function SwipeReviewStack({ items: initialItems, clientId }: { it
   async function handleApprove() {
     if (!current) return
     const table = TABLE_MAP[current.type]
-    await supabase.from(table).update({ status: 'approved', reviewed_at: new Date().toISOString(), comment: null }).eq('id', current.id)
+    const { error } = await supabase
+      .from(table)
+      .update({ status: 'approved', reviewed_at: new Date().toISOString(), comment: null })
+      .eq('id', current.id)
 
-    const staffIds = await getStaffToNotify(supabase, clientId)
-    if (staffIds.length > 0) {
-      await supabase.from('notifications').insert(
-        staffIds.map((uid) => ({
-          user_id: uid,
-          type: 'approved' as const,
-          message: `"${current.title}" foi aprovado pelo cliente`,
-          ref_id: current.id,
-          ref_type: current.type,
-        }))
-      )
+    if (error) {
+      toast.error(`Erro ao aprovar: ${error.message}`)
+      return
+    }
+
+    try {
+      const staffIds = await getStaffToNotify(supabase, clientId)
+      if (staffIds.length > 0) {
+        await supabase.from('notifications').insert(
+          staffIds.map((uid) => ({
+            user_id: uid,
+            type: 'approved' as const,
+            message: `"${current.title}" foi aprovado pelo cliente`,
+            ref_id: current.id,
+            ref_type: current.type,
+          }))
+        )
+      }
+    } catch (_) {
+      // notification failure doesn't block the approval
     }
 
     toast.success('Aprovado! ✓', { duration: 1500 })
@@ -267,19 +279,31 @@ export default function SwipeReviewStack({ items: initialItems, clientId }: { it
   async function handleReject(comment: string) {
     if (!current) return
     const table = TABLE_MAP[current.type]
-    await supabase.from(table).update({ status: 'rejected', reviewed_at: new Date().toISOString(), comment: comment.trim() }).eq('id', current.id)
+    const { error } = await supabase
+      .from(table)
+      .update({ status: 'rejected', reviewed_at: new Date().toISOString(), comment: comment.trim() })
+      .eq('id', current.id)
 
-    const staffIds = await getStaffToNotify(supabase, clientId)
-    if (staffIds.length > 0) {
-      await supabase.from('notifications').insert(
-        staffIds.map((uid) => ({
-          user_id: uid,
-          type: 'rejected' as const,
-          message: `"${current.title}" foi rejeitado. Motivo: ${comment.trim()}`,
-          ref_id: current.id,
-          ref_type: current.type,
-        }))
-      )
+    if (error) {
+      toast.error(`Erro ao rejeitar: ${error.message}`)
+      return
+    }
+
+    try {
+      const staffIds = await getStaffToNotify(supabase, clientId)
+      if (staffIds.length > 0) {
+        await supabase.from('notifications').insert(
+          staffIds.map((uid) => ({
+            user_id: uid,
+            type: 'rejected' as const,
+            message: `"${current.title}" foi rejeitado. Motivo: ${comment.trim()}`,
+            ref_id: current.id,
+            ref_type: current.type,
+          }))
+        )
+      }
+    } catch (_) {
+      // notification failure doesn't block the rejection
     }
 
     toast.error('Feedback enviado', { duration: 1500 })
