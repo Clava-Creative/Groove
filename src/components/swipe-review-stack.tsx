@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
-import { Check, X, ImageIcon, PlayCircle, Megaphone, Lightbulb, ChevronLeft, Package, ArrowRight } from 'lucide-react'
+import { Check, X, ImageIcon, PlayCircle, Megaphone, Lightbulb, ChevronLeft, Package } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -234,46 +234,156 @@ function SwipeCard({
   )
 }
 
-// ─── Package card (not swipeable — opens in calendar) ────────────────────────
-function PackageSwipeCard({ item, onSkip }: { item: SwipeItem; onSkip: () => void }) {
-  const router = useRouter()
-  return (
-    <div className="absolute inset-0 flex flex-col bg-white rounded-3xl shadow-xl overflow-hidden">
-      {/* Header */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6 text-center">
-        <div className="w-20 h-20 rounded-2xl bg-violet-50 flex items-center justify-center">
-          <Package className="w-10 h-10 text-violet-400" />
-        </div>
-        <div>
-          <p className="text-xs font-semibold text-violet-500 uppercase tracking-wider mb-1">Pacote</p>
-          <p className="text-xl font-bold text-gray-900">{item.title}</p>
-          {item.file_count != null && (
-            <p className="text-sm text-gray-400 mt-1">{item.file_count} arquivo{item.file_count !== 1 ? 's' : ''} para revisar</p>
-          )}
-          {item.scheduled_date && (
-            <p className="text-xs text-gray-400 mt-2">
-              {new Date(item.scheduled_date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}
-            </p>
-          )}
-        </div>
-        <p className="text-sm text-gray-400 max-w-xs">
-          Pacotes têm múltiplos arquivos. Revise cada um pelo calendário.
-        </p>
-      </div>
+// ─── Package card (swipeable — approves/rejects all items at once) ────────────
+function PackageSwipeCard({
+  item,
+  index,
+  isTop,
+  onApprove,
+  onReject,
+}: {
+  item: SwipeItem
+  index: number
+  isTop: boolean
+  onApprove: () => void
+  onReject: (comment: string) => void
+}) {
+  const x = useMotionValue(0)
+  const rotate = useTransform(x, [-200, 0, 200], [-18, 0, 18])
+  const approveOpacity = useTransform(x, [20, SWIPE_THRESHOLD], [0, 1])
+  const rejectOpacity = useTransform(x, [-SWIPE_THRESHOLD, -20], [1, 0])
+  const [showRejectSheet, setShowRejectSheet] = useState(false)
+  const [comment, setComment] = useState('')
+  const [leaving, setLeaving] = useState(false)
+  const dragStartX = useRef(0)
 
-      {/* Actions */}
-      <div className="p-5 space-y-2 border-t border-gray-100">
-        <Button
-          className="w-full bg-violet-600 hover:bg-violet-700 gap-2"
-          onClick={() => router.push('/client/calendar')}
-        >
-          Abrir no calendário <ArrowRight className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" className="w-full text-gray-400" onClick={onSkip}>
-          Pular por agora
-        </Button>
-      </div>
-    </div>
+  const flyOut = useCallback(async (direction: 'left' | 'right') => {
+    setLeaving(true)
+    await animate(x, direction === 'right' ? 500 : -500, { duration: 0.3, ease: 'easeOut' })
+    if (direction === 'right') onApprove()
+    else onReject(comment)
+  }, [x, comment, onApprove, onReject])
+
+  function handleDragEnd(_: unknown, info: { offset: { x: number } }) {
+    if (info.offset.x > SWIPE_THRESHOLD) {
+      flyOut('right')
+    } else if (info.offset.x < -SWIPE_THRESHOLD) {
+      if (!comment.trim()) {
+        animate(x, 0, { type: 'spring', stiffness: 300 })
+        setShowRejectSheet(true)
+      } else {
+        flyOut('left')
+      }
+    } else {
+      animate(x, 0, { type: 'spring', stiffness: 300 })
+    }
+  }
+
+  const stackOffset = index * 6
+  const stackScale = 1 - index * 0.04
+
+  return (
+    <>
+      <motion.div
+        className="absolute inset-0 flex flex-col bg-white rounded-3xl shadow-xl overflow-hidden cursor-grab active:cursor-grabbing"
+        style={isTop ? { x, rotate, zIndex: 10 } : {
+          zIndex: 10 - index,
+          bottom: stackOffset,
+          top: -stackOffset,
+          scale: stackScale,
+        }}
+        drag={isTop && !leaving ? 'x' : false}
+        dragConstraints={{ left: 0, right: 0 }}
+        onDragStart={(_, info) => { dragStartX.current = info.point.x }}
+        onDragEnd={handleDragEnd}
+      >
+        {/* Approve overlay */}
+        <motion.div style={{ opacity: approveOpacity }}
+          className="absolute inset-0 bg-emerald-400/20 rounded-3xl z-10 flex items-center justify-start pl-8 pointer-events-none">
+          <div className="bg-emerald-500 text-white font-black text-2xl px-4 py-2 rounded-2xl rotate-[-20deg] border-4 border-white shadow-lg">
+            APROVAR TUDO ✓
+          </div>
+        </motion.div>
+
+        {/* Reject overlay */}
+        <motion.div style={{ opacity: rejectOpacity }}
+          className="absolute inset-0 bg-red-400/20 rounded-3xl z-10 flex items-center justify-end pr-8 pointer-events-none">
+          <div className="bg-red-500 text-white font-black text-2xl px-4 py-2 rounded-2xl rotate-[20deg] border-4 border-white shadow-lg">
+            AJUSTE ✗
+          </div>
+        </motion.div>
+
+        {/* Content */}
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6 text-center pointer-events-none select-none">
+          <div className="w-20 h-20 rounded-2xl bg-violet-50 flex items-center justify-center">
+            <Package className="w-10 h-10 text-violet-400" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-violet-500 uppercase tracking-wider mb-1">Pacote</p>
+            <p className="text-xl font-bold text-gray-900">{item.title}</p>
+            {item.file_count != null && item.file_count > 0 && (
+              <p className="text-sm text-gray-400 mt-1">{item.file_count} arquivo{item.file_count !== 1 ? 's' : ''}</p>
+            )}
+            {item.scheduled_date && (
+              <p className="text-xs text-gray-400 mt-2">
+                {new Date(item.scheduled_date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}
+              </p>
+            )}
+          </div>
+          {isTop && (
+            <div className="flex items-center gap-3 mt-2 text-gray-300">
+              <div className="flex items-center gap-1 text-xs">
+                <X className="w-3.5 h-3.5 text-red-300" /> arraste para rejeitar
+              </div>
+              <div className="w-px h-4 bg-gray-200" />
+              <div className="flex items-center gap-1 text-xs">
+                arraste para aprovar <Check className="w-3.5 h-3.5 text-emerald-300" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Caption */}
+        {item.caption && (
+          <div className="mx-5 mb-4 bg-gray-50 rounded-xl p-3 pointer-events-none">
+            <p className="text-xs text-gray-500 line-clamp-2">{item.caption}</p>
+          </div>
+        )}
+      </motion.div>
+
+      {/* Reject comment sheet */}
+      {showRejectSheet && (
+        <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/40 rounded-3xl">
+          <div className="bg-white rounded-t-3xl p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
+            <p className="font-semibold text-gray-900">Solicitar ajuste no pacote</p>
+            <p className="text-sm text-gray-400">O que precisa ser ajustado?</p>
+            <Textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Descreva o ajuste necessário..."
+              rows={3}
+              className="resize-none"
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setShowRejectSheet(false)}>
+                Cancelar
+              </Button>
+              <Button
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white gap-1.5"
+                onClick={() => {
+                  if (!comment.trim()) { toast.error('Escreva o motivo'); return }
+                  setShowRejectSheet(false)
+                  flyOut('left')
+                }}
+              >
+                <X className="w-4 h-4" /> Enviar feedback
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -286,22 +396,28 @@ export default function SwipeReviewStack({ items: initialItems, clientId }: { it
 
   const current = items[0]
 
-  function handleSkipPackage() {
-    // Move package to end of queue so user can review others first
-    setItems((prev) => [...prev.slice(1), prev[0]])
-  }
-
   async function handleApprove() {
     if (!current) return
-    const table = TABLE_MAP[current.type]
-    const { error } = await supabase
-      .from(table)
-      .update({ status: 'approved', reviewed_at: new Date().toISOString(), comment: null })
-      .eq('id', current.id)
 
-    if (error) {
-      toast.error(`Erro ao aprovar: ${error.message}`)
-      return
+    if (current.is_package) {
+      // Approve all pending post_items + update post status
+      const { data: postItems } = await supabase
+        .from('post_items').select('id').eq('post_id', current.id).eq('status', 'pending')
+      if (postItems && postItems.length > 0) {
+        await supabase.from('post_items')
+          .update({ status: 'approved', reviewed_at: new Date().toISOString() })
+          .eq('post_id', current.id).eq('status', 'pending')
+      }
+      const { error } = await supabase.from('posts')
+        .update({ status: 'approved', reviewed_at: new Date().toISOString() })
+        .eq('id', current.id)
+      if (error) { toast.error(`Erro ao aprovar: ${error.message}`); return }
+    } else {
+      const { error } = await supabase
+        .from(TABLE_MAP[current.type])
+        .update({ status: 'approved', reviewed_at: new Date().toISOString(), comment: null })
+        .eq('id', current.id)
+      if (error) { toast.error(`Erro ao aprovar: ${error.message}`); return }
     }
 
     try {
@@ -317,9 +433,7 @@ export default function SwipeReviewStack({ items: initialItems, clientId }: { it
           }))
         )
       }
-    } catch (_) {
-      // notification failure doesn't block the approval
-    }
+    } catch (_) { /* notification failure doesn't block */ }
 
     toast.success('Aprovado! ✓', { duration: 1500 })
     setReviewed((r) => r + 1)
@@ -328,15 +442,22 @@ export default function SwipeReviewStack({ items: initialItems, clientId }: { it
 
   async function handleReject(comment: string) {
     if (!current) return
-    const table = TABLE_MAP[current.type]
-    const { error } = await supabase
-      .from(table)
-      .update({ status: 'rejected', reviewed_at: new Date().toISOString(), comment: comment.trim() })
-      .eq('id', current.id)
 
-    if (error) {
-      toast.error(`Erro ao rejeitar: ${error.message}`)
-      return
+    if (current.is_package) {
+      // Reject all pending post_items + update post status
+      await supabase.from('post_items')
+        .update({ status: 'rejected', comment: comment.trim(), reviewed_at: new Date().toISOString() })
+        .eq('post_id', current.id).eq('status', 'pending')
+      const { error } = await supabase.from('posts')
+        .update({ status: 'rejected', comment: comment.trim(), reviewed_at: new Date().toISOString() })
+        .eq('id', current.id)
+      if (error) { toast.error(`Erro ao rejeitar: ${error.message}`); return }
+    } else {
+      const { error } = await supabase
+        .from(TABLE_MAP[current.type])
+        .update({ status: 'rejected', reviewed_at: new Date().toISOString(), comment: comment.trim() })
+        .eq('id', current.id)
+      if (error) { toast.error(`Erro ao rejeitar: ${error.message}`); return }
     }
 
     try {
@@ -352,9 +473,7 @@ export default function SwipeReviewStack({ items: initialItems, clientId }: { it
           }))
         )
       }
-    } catch (_) {
-      // notification failure doesn't block the rejection
-    }
+    } catch (_) { /* notification failure doesn't block */ }
 
     toast.error('Feedback enviado', { duration: 1500 })
     setReviewed((r) => r + 1)
@@ -416,7 +535,14 @@ export default function SwipeReviewStack({ items: initialItems, clientId }: { it
         ))}
         {/* Top card — package or regular */}
         {current.is_package ? (
-          <PackageSwipeCard item={current} onSkip={handleSkipPackage} />
+          <PackageSwipeCard
+            key={current.id}
+            item={current}
+            index={0}
+            isTop={true}
+            onApprove={handleApprove}
+            onReject={handleReject}
+          />
         ) : (
           <SwipeCard
             key={current.id}
