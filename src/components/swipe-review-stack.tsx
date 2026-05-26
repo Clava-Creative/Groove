@@ -354,9 +354,11 @@ function PackageDoorCard({ item, index, onEnter }: {
   const stackScale = 1 - index * 0.04
 
   return (
-    <div
+    <motion.div
       className="absolute inset-0 flex flex-col bg-white rounded-3xl shadow-xl overflow-hidden"
-      style={index === 0 ? { zIndex: 10 } : { zIndex: 10 - index, bottom: stackOffset, top: -stackOffset, scale: stackScale }}
+      style={{ zIndex: 10 - index }}
+      animate={index > 0 ? { scale: stackScale, y: stackOffset } : { scale: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
     >
       <div className="flex-1 flex flex-col items-center justify-center gap-5 p-6 text-center">
         <div className="w-24 h-24 rounded-2xl bg-violet-50 flex items-center justify-center">
@@ -384,7 +386,7 @@ function PackageDoorCard({ item, index, onEnter }: {
           <Package className="w-4 h-4" /> Revisar arquivos
         </Button>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -470,6 +472,19 @@ function PackageReviewMode({
     if (newItems.length === 0) {
       await finalize(approvedCount, newRejected)
     }
+  }
+
+  async function handleApproveAll() {
+    const { error } = await supabase.from('post_items')
+      .update({ status: 'approved', reviewed_at: new Date().toISOString(), comment: null })
+      .in('id', items.map((i) => i.id))
+
+    if (error) { toast.error(`Erro: ${error.message}`); return }
+
+    const totalApproved = approvedCount + items.length
+    setApprovedCount(totalApproved)
+    setItems([])
+    await finalize(totalApproved, rejectedCount)
   }
 
   // Summary screen after all items reviewed
@@ -561,7 +576,7 @@ function PackageReviewMode({
       </div>
 
       {/* Action buttons */}
-      <div className="flex items-center justify-center gap-8 pb-8 pt-2 shrink-0">
+      <div className="flex items-center justify-center gap-8 pt-2 shrink-0">
         <button
           onClick={() => {
             const comment = window.prompt('Descreva o ajuste necessário:')
@@ -582,7 +597,14 @@ function PackageReviewMode({
         </button>
         <div className="w-16 h-16" />
       </div>
-      <p className="text-center text-xs text-gray-300 pb-4 shrink-0">← rejeitar · aprovar →</p>
+      <p className="text-center text-xs text-gray-300 pt-1 shrink-0">← rejeitar · aprovar →</p>
+      {/* Approve all shortcut */}
+      <button
+        onClick={handleApproveAll}
+        className="mx-5 mb-5 mt-2 py-2.5 rounded-xl text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 active:scale-95 transition-all shrink-0"
+      >
+        Aprovar todos os {items.length} arquivo{items.length !== 1 ? 's' : ''} restantes
+      </button>
     </div>
   )
 }
@@ -610,8 +632,12 @@ export default function SwipeReviewStack({ items: initialItems, clientId }: { it
     setLoadingPackage(false)
 
     if (error) { toast.error('Erro ao carregar arquivos'); return }
+
     if (!data || data.length === 0) {
-      toast.info('Todos os arquivos já foram revisados')
+      // Package has no pending items — remove from queue automatically
+      toast.info('Pacote sem arquivos pendentes', { duration: 2000 })
+      setReviewed((r) => r + 1)
+      setItems((prev) => prev.slice(1))
       return
     }
 
