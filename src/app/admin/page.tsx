@@ -35,62 +35,70 @@ export default async function AdminDashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card className="border-0 shadow-sm">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center">
-                <Users className="w-4 h-4 text-violet-600" />
+        <Link href="/admin/clients">
+          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center group-hover:bg-violet-100 transition-colors">
+                  <Users className="w-4 h-4 text-violet-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{clientCount ?? 0}</p>
+                  <p className="text-xs text-gray-500">Clientes ativos</p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{clientCount ?? 0}</p>
-                <p className="text-xs text-gray-500">Clientes ativos</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/posts">
+          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+                  <Clock className="w-4 h-4 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{totalPending}</p>
+                  <p className="text-xs text-gray-500">Itens pendentes</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center">
-                <Clock className="w-4 h-4 text-amber-600" />
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/posts">
+          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+                  <CheckCircle className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {recentActivity?.filter((a) => a.status === 'approved').length ?? 0}
+                  </p>
+                  <p className="text-xs text-gray-500">Aprovados recentes</p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{totalPending}</p>
-                <p className="text-xs text-gray-500">Itens pendentes</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/posts">
+          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center group-hover:bg-red-100 transition-colors">
+                  <XCircle className="w-4 h-4 text-red-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {recentActivity?.filter((a) => a.status === 'rejected').length ?? 0}
+                  </p>
+                  <p className="text-xs text-gray-500">Rejeitados recentes</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center">
-                <CheckCircle className="w-4 h-4 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {recentActivity?.filter((a) => a.status === 'approved').length ?? 0}
-                </p>
-                <p className="text-xs text-gray-500">Aprovados recentes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center">
-                <XCircle className="w-4 h-4 text-red-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {recentActivity?.filter((a) => a.status === 'rejected').length ?? 0}
-                </p>
-                <p className="text-xs text-gray-500">Rejeitados recentes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
