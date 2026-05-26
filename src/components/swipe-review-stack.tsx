@@ -403,13 +403,16 @@ function PackageReviewMode({
   onBack: () => void
 }) {
   const [items, setItems] = useState(state.items)
-  const [reviewed, setReviewed] = useState(0)
+  const [approvedCount, setApprovedCount] = useState(0)
+  const [rejectedCount, setRejectedCount] = useState(0)
+  const [done, setDone] = useState(false)
   const total = state.items.length
+  const reviewed = approvedCount + rejectedCount
 
   const current = items[0]
 
-  async function finalize(finalItems: PackageItem[], approved: boolean[]) {
-    const anyRejected = approved.some((a) => !a)
+  async function finalize(totalApproved: number, totalRejected: number) {
+    const anyRejected = totalRejected > 0
     const postStatus = anyRejected ? 'rejected' : 'approved'
     await supabase.from('posts')
       .update({ status: postStatus, reviewed_at: new Date().toISOString() })
@@ -422,7 +425,7 @@ function PackageReviewMode({
           staffIds.map((uid) => ({
             user_id: uid,
             type: postStatus as 'approved' | 'rejected',
-            message: `Pacote "${state.postTitle}" ${anyRejected ? 'tem itens com ajuste solicitado' : 'foi aprovado pelo cliente'}`,
+            message: `Pacote "${state.postTitle}": ${totalApproved} aprovado${totalApproved !== 1 ? 's' : ''}, ${totalRejected} com ajuste`,
             ref_id: state.postId,
             ref_type: 'post',
           }))
@@ -430,7 +433,7 @@ function PackageReviewMode({
       }
     } catch (_) { /* silent */ }
 
-    onFinish()
+    setDone(true)
   }
 
   async function handleItemApprove() {
@@ -441,15 +444,14 @@ function PackageReviewMode({
 
     if (error) { toast.error(`Erro: ${error.message}`); return }
 
-    toast.success('Aprovado! ✓', { duration: 1000 })
+    const newApproved = approvedCount + 1
+    setApprovedCount(newApproved)
     const newItems = items.slice(1)
-    setReviewed((r) => r + 1)
+    setItems(newItems)
 
     if (newItems.length === 0) {
-      await finalize([], [true]) // simplified — post gets 'approved' since this was last item
-      return
+      await finalize(newApproved, rejectedCount)
     }
-    setItems(newItems)
   }
 
   async function handleItemReject(comment: string) {
@@ -460,29 +462,62 @@ function PackageReviewMode({
 
     if (error) { toast.error(`Erro: ${error.message}`); return }
 
-    toast.error('Ajuste solicitado', { duration: 1000 })
+    const newRejected = rejectedCount + 1
+    setRejectedCount(newRejected)
     const newItems = items.slice(1)
-    setReviewed((r) => r + 1)
+    setItems(newItems)
 
     if (newItems.length === 0) {
-      await finalize([], [false])
-      return
+      await finalize(approvedCount, newRejected)
     }
-    setItems(newItems)
   }
 
-  // All items reviewed — this is the "done" state for the package
-  if (items.length === 0) {
+  // Summary screen after all items reviewed
+  if (done) {
     return (
       <div className="absolute inset-0 z-50 flex flex-col bg-gray-50">
-        <div className="flex flex-col items-center justify-center flex-1 gap-5 p-8 text-center">
-          <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center">
-            <Check className="w-10 h-10 text-emerald-500" />
+        <div className="flex flex-col items-center justify-center flex-1 gap-6 p-8 text-center">
+          <div className="w-20 h-20 rounded-full bg-violet-50 flex items-center justify-center">
+            <Package className="w-10 h-10 text-violet-500" />
           </div>
           <div>
             <p className="text-xl font-bold text-gray-900">Pacote revisado!</p>
-            <p className="text-sm text-gray-500 mt-1">{reviewed} arquivo{reviewed !== 1 ? 's' : ''} revisado{reviewed !== 1 ? 's' : ''}</p>
+            <p className="text-sm text-gray-500 mt-1">{state.postTitle}</p>
           </div>
+
+          {/* Breakdown bar */}
+          <div className="w-full max-w-xs">
+            <div className="flex rounded-full overflow-hidden h-3 mb-3">
+              {approvedCount > 0 && (
+                <div
+                  className="bg-emerald-400 transition-all"
+                  style={{ width: `${(approvedCount / total) * 100}%` }}
+                />
+              )}
+              {rejectedCount > 0 && (
+                <div
+                  className="bg-red-400 transition-all"
+                  style={{ width: `${(rejectedCount / total) * 100}%` }}
+                />
+              )}
+            </div>
+            <div className="flex justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                <span className="text-sm font-semibold text-gray-700">{approvedCount} aprovado{approvedCount !== 1 ? 's' : ''}</span>
+              </div>
+              {rejectedCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                  <span className="text-sm font-semibold text-gray-700">{rejectedCount} com ajuste</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Button className="bg-violet-600 hover:bg-violet-700 mt-2" onClick={onFinish}>
+            Continuar revisão
+          </Button>
         </div>
       </div>
     )
